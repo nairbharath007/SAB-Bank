@@ -315,8 +315,8 @@ namespace E_Bank.Services
         public Account FetchFDAccountByAccountId(int id)
         {
             var matched = _repository.Get().Where(acn => acn.AccountNumber == id)
-                  .Include(acn => acn.FDAccounts)
-                  .Where(fdn => fdn.IsActive)
+                  .Include(acn => acn.FDAccounts.Where(acn => acn.IsActive==true))
+                  .Where(fdn => fdn.IsActive==true)
                   .FirstOrDefault();
             if (matched == null)
             {
