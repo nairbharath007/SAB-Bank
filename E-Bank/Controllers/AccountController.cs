@@ -46,6 +46,7 @@ namespace E_Bank.Controllers
                 Amount = fDAccount.Amount,
                 Duration = fDAccount.Duration,
                 ROI = fDAccount.ROI,
+                
                 IsActive = fDAccount.IsActive,
                 MaturityDate = fDAccount.MaturityDate,
                 MaturityAmount = fDAccount.MaturityAmount,
@@ -334,6 +335,21 @@ namespace E_Bank.Controllers
             }
 
             throw new UserNotFoundException("Cannot find any FD AccountId so no account added");
+        }
+
+
+        [HttpGet("acountIdFetchFDAccount/{id:int}")]
+        public IActionResult FetchFDAccount(int id)
+        {
+
+            var Details = _accountService.FetchFDAccountByAccountId(id);
+
+            if (Details != null)
+            {
+                return Ok(Details);
+            }
+
+            return BadRequest("error not matched");
         }
 
     }

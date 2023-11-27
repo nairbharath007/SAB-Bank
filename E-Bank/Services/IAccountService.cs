@@ -41,5 +41,7 @@ namespace E_Bank.Services
         public int AddFDAccount(FDAccount fdAccount);
         public List<FDAccount> GetAllRequestedFD();
         public int ActivateFDRequest(int fdAccountId);
+
+        public Account FetchFDAccountByAccountId(int id);
     }
 }

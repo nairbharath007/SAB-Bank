@@ -3,6 +3,7 @@ using E_Bank.Dto;
 using E_Bank.Models;
 using E_Bank.Repository;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 //using System.Security.Cryptography;
 using static E_Bank.Repository.IRepository;
 
@@ -16,6 +17,7 @@ namespace E_Bank.Services
         private IRepository<Account> _repository;
         private IRepository<FDAccount> _fdAccountRepository;
         private IRepository<TransactionClass> _transactionClassRepository;
+        
 
         public AccountService(IRepository<Account> repository,
             IRepository<TransactionClass> transactionRep,
@@ -191,6 +193,7 @@ namespace E_Bank.Services
             var matchedAccount = _repository.Get()
                   .Where(acn => acn.CustomerId == id && acn.AccountType == "Savings" && acn.IsActive == true
                   || acn.CustomerId == id && acn.AccountType == "Current" && acn.IsActive == true)
+                  
                   .ToList();
             if (matchedAccount == null)
             {
@@ -274,8 +277,27 @@ namespace E_Bank.Services
 
             senderAcc.AccountBalance = senderAccBal - inactivatedFDAccBalance;
 
+            if(senderAcc.AccountBalance < 500)
+                throw new InvalidOperationException("Sender Account Minimum balance reached.");
+
             _repository.Update(senderAcc); //updated acc bal
 
+            TransactionClass newTransaction = new TransactionClass
+            {
+                TransactionDate = DateTime.Now,
+                TransactionAmount = inactivatedFDAccBalance,
+                Description = "FD transfer",
+                IsActive = true,
+                TransactionType = "Transfer Amount",
+                AccountId = senderAcc.AccountNumber,
+                State = "Success",
+                UpdatedBalance = senderAcc.AccountBalance,
+                ReceiverId = inactivatedFDAcc.FDAccountId,
+
+            };
+
+            _transactionClassRepository.Add(newTransaction);
+            
 
             if (_fdAccountRepository.Update(inactivatedFDAcc) == null)
             {
@@ -286,6 +308,21 @@ namespace E_Bank.Services
             return 1;
 
 
+        }
+
+
+
+        public Account FetchFDAccountByAccountId(int id)
+        {
+            var matched = _repository.Get().Where(acn => acn.AccountNumber == id)
+                  .Include(acn => acn.FDAccounts)
+                  .Where(fdn => fdn.IsActive)
+                  .FirstOrDefault();
+            if (matched == null)
+            {
+                return null;
+            }
+            return matched;
         }
     }
 }
